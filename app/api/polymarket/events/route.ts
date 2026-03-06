@@ -23,7 +23,19 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    // Ensure we return an array and filter out invalid entries
+    const events = Array.isArray(data) ? data : [];
+    const validEvents = events.filter(
+      (event: any) =>
+        event &&
+        event.id &&
+        event.timestamp &&
+        typeof event.value === 'number' &&
+        !isNaN(event.value)
+    );
+
+    return NextResponse.json(validEvents);
   } catch (error) {
     console.error("Error fetching events:", error);
     return NextResponse.json(

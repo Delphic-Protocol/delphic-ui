@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const POLYMARKET_API_URL = process.env.NEXT_PUBLIC_POLYMARKET_GAMMA_API_URL;
+const POLYMARKET_API_URL = process.env.NEXT_PUBLIC_POLYMARKET_DATA_API_URL;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

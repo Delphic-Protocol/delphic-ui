@@ -51,7 +51,7 @@ export function usePolymarketData(
 
       try {
         const response = await fetch(
-          `/api/polymarket/public-profile?address=${userAddress}`
+          `/api/polymarket/users?address=${userAddress}`
         );
 
         if (!response.ok) {
