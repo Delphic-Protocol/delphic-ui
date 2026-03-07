@@ -8,6 +8,7 @@ import { DepositAndBridge } from "@/components/DepositAndBridge";
 import { RepayLoan } from "@/components/RepayLoan";
 import { NetworkGuard } from "@/components/NetworkGuard";
 import { RegistrationModal } from "@/components/RegistrationModal";
+import { MarketList } from "@/components/MarketList";
 import { useMarginAccount } from "@/hooks/useMarginAccount";
 import { usePolymarketData } from "@/hooks/usePolymarketData";
 
@@ -76,6 +77,9 @@ export function HomePage() {
                   </div>
                 </>
               )}
+
+              {/* Polymarket Markets */}
+              <MarketList />
             </div>
           )}
         </NetworkGuard>
