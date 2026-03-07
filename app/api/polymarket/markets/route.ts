@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get("limit") || "16";
     const offset = searchParams.get("offset") || "0";
 
-    const url = `https://gamma-api.polymarket.com/markets?limit=${limit}&offset=${offset}&active=true&closed=false`;
+    const url = `https://gamma-api.polymarket.com/markets?limit=${limit}&offset=${offset}&active=true&closed=false&featured=true`;
 
     const response = await fetch(url, {
       headers: {

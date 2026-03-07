@@ -1,10 +1,34 @@
 "use client";
 
+import { useState } from "react";
 import { usePolymarketMarkets } from "@/hooks/usePolymarketMarkets";
 import { MarketCard } from "./MarketCard";
+import { MarketModal } from "./MarketModal";
+import { EventPage } from "./EventPage";
+import { PolymarketEvent } from "@/lib/polymarket/types";
 
 export function MarketList() {
   const { markets, loading, error, hasMore, loadMore } = usePolymarketMarkets(16);
+  const [selectedMarket, setSelectedMarket] = useState<PolymarketEvent | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "event">("list");
+
+  const handleMarketClick = (market: PolymarketEvent) => {
+    setSelectedMarket(market);
+    // If multiple markets, go to event page; otherwise show modal
+    if (market.markets && market.markets.length > 1) {
+      setViewMode("event");
+    }
+  };
+
+  const handleBackToList = () => {
+    setViewMode("list");
+    setSelectedMarket(null);
+  };
+
+  // Show event detail page
+  if (viewMode === "event" && selectedMarket) {
+    return <EventPage event={selectedMarket} onBack={handleBackToList} />;
+  }
 
   if (loading && markets.length === 0) {
     return (
@@ -126,9 +150,21 @@ export function MarketList() {
       {/* Market grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {markets.map((market) => (
-          <MarketCard key={market.id} market={market} />
+          <MarketCard
+            key={market.id}
+            market={market}
+            onClick={() => handleMarketClick(market)}
+          />
         ))}
       </div>
+
+      {/* Market modal - only for single-market events */}
+      {selectedMarket && selectedMarket.markets.length === 1 && (
+        <MarketModal
+          event={selectedMarket}
+          onClose={() => setSelectedMarket(null)}
+        />
+      )}
 
       {/* Load more button */}
       {hasMore && (

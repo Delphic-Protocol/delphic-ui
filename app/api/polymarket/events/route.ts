@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `${POLYMARKET_API_URL}/events?limit=${limit}&offset=${offset}&closed=false`
+      `${POLYMARKET_API_URL}/events?limit=${limit}&offset=${offset}&closed=false&featured=true`
     );
 
     if (!response.ok) {

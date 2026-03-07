@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAccount } from "wagmi";
 import { WalletConnect } from "@/components/WalletConnect";
 import { InitializeMarginAccount } from "@/components/InitializeMarginAccount";
@@ -12,10 +13,13 @@ import { MarketList } from "@/components/MarketList";
 import { useMarginAccount } from "@/hooks/useMarginAccount";
 import { usePolymarketData } from "@/hooks/usePolymarketData";
 
+type TabType = "markets" | "account";
+
 export function HomePage() {
   const { address, isConnected } = useAccount();
   const { hasMarginAccount } = useMarginAccount(address);
   const polymarketData = usePolymarketData(address);
+  const [activeTab, setActiveTab] = useState<TabType>("markets");
 
   // Show registration modal when user is not found on Polymarket
   const showRegistrationModal = polymarketData.userNotFound;
@@ -29,11 +33,39 @@ export function HomePage() {
       <div className="orb orb-4"></div>
 
       <header className="border-b border-[#2a2a2a] bg-[#0a0a0a]/80 backdrop-blur-sm relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">
-            Delphic
-          </h1>
-          <WalletConnect />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <h1 className="text-2xl font-bold text-white">
+                Delphic
+              </h1>
+              {isConnected && (
+                <nav className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab("markets")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeTab === "markets"
+                        ? "bg-blue-500 text-white"
+                        : "text-zinc-400 hover:text-white hover:bg-[#1a1a1a]"
+                    }`}
+                  >
+                    Markets
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("account")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeTab === "account"
+                        ? "bg-blue-500 text-white"
+                        : "text-zinc-400 hover:text-white hover:bg-[#1a1a1a]"
+                    }`}
+                  >
+                    Account
+                  </button>
+                </nav>
+              )}
+            </div>
+            <WalletConnect />
+          </div>
         </div>
       </header>
 
@@ -61,25 +93,26 @@ export function HomePage() {
             />
           ) : (
             <div className="space-y-8">
-              {!hasMarginAccount && (
-                <div className="max-w-2xl mx-auto">
-                  <InitializeMarginAccount />
-                </div>
-              )}
-
-              {hasMarginAccount && (
+              {activeTab === "markets" ? (
+                <MarketList />
+              ) : (
                 <>
-                  <AccountDashboard />
+                  {!hasMarginAccount ? (
+                    <div className="max-w-2xl mx-auto">
+                      <InitializeMarginAccount />
+                    </div>
+                  ) : (
+                    <>
+                      <AccountDashboard />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DepositAndBridge />
-                    <RepayLoan />
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <DepositAndBridge />
+                        <RepayLoan />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
-
-              {/* Polymarket Markets */}
-              <MarketList />
             </div>
           )}
         </NetworkGuard>
@@ -87,3 +120,5 @@ export function HomePage() {
     </div>
   );
 }
+
+export default HomePage;

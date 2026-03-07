@@ -42,6 +42,8 @@ export interface PolymarketEvent {
   volume?: number;
   openInterest?: number;
   volume24hr?: number;
+  category?: string;
+  subcategory?: string;
   markets: PolymarketMarket[];
 }
 
