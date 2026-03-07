@@ -9,6 +9,7 @@ export interface PolymarketMarket {
   endDate?: string;
   outcomes?: string; // JSON stringified array
   outcomePrices?: string; // JSON stringified array
+  clobTokenIds?: string | null; // JSON stringified array of token IDs [YES, NO]
   active?: boolean;
   closed?: boolean;
   acceptingOrders?: boolean;

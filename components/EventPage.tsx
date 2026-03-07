@@ -10,9 +10,13 @@ interface EventPageProps {
 }
 
 export function EventPage({ event, onBack }: EventPageProps) {
-  const [showTradingModal, setShowTradingModal] = useState(false);
-  const [selectedMarketIndex, setSelectedMarketIndex] = useState(0);
+  const [selectedMarket, setSelectedMarket] = useState(event.markets[0]);
   const [selectedOutcome, setSelectedOutcome] = useState<number>(0);
+
+  // Update selected market when index changes
+  const handleMarketClick = (market: typeof event.markets[0]) => {
+    setSelectedMarket(market);
+  };
 
   const formatVolume = (vol?: number | string) => {
     if (!vol) return "$0";
@@ -129,9 +133,9 @@ export function EventPage({ event, onBack }: EventPageProps) {
                 return (
                   <div
                     key={market.id}
-                    onClick={() => setSelectedMarketIndex(idx)}
+                    onClick={() => handleMarketClick(market)}
                     className={`bg-[#1a1a1a] border rounded-xl p-6 transition-all cursor-pointer ${
-                      selectedMarketIndex === idx
+                      selectedMarket?.id === market.id
                         ? "border-blue-500"
                         : "border-[#2a2a2a] hover:border-[#3a3a3a]"
                     }`}
@@ -158,7 +162,7 @@ export function EventPage({ event, onBack }: EventPageProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedMarketIndex(idx);
+                          handleMarketClick(market);
                           setSelectedOutcome(0);
                         }}
                         className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-colors"
@@ -168,7 +172,7 @@ export function EventPage({ event, onBack }: EventPageProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedMarketIndex(idx);
+                          handleMarketClick(market);
                           setSelectedOutcome(1);
                         }}
                         className="px-6 py-4 bg-red-900/60 hover:bg-red-900/80 text-red-400 rounded-lg font-bold transition-colors"
@@ -192,24 +196,19 @@ export function EventPage({ event, onBack }: EventPageProps) {
 
           {/* Trading panel - fixed on desktop */}
           <div className="lg:sticky lg:top-24 h-fit">
-            <MarketModal
-              event={event}
-              onClose={() => {}}
-              embedded={true}
-              selectedMarketIndex={selectedMarketIndex}
-              initialSelectedOutcome={selectedOutcome}
-            />
+            {selectedMarket && (
+              <MarketModal
+                market={selectedMarket}
+                eventTitle={event.title}
+                eventIcon={event.icon || event.image}
+                onClose={() => {}}
+                embedded={true}
+                initialSelectedOutcome={selectedOutcome}
+              />
+            )}
           </div>
         </div>
       </div>
-
-      {/* Trading modal */}
-      {showTradingModal && (
-        <MarketModal
-          event={event}
-          onClose={() => setShowTradingModal(false)}
-        />
-      )}
     </div>
   );
 }

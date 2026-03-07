@@ -161,7 +161,9 @@ export function MarketList() {
       {/* Market modal - only for single-market events */}
       {selectedMarket && selectedMarket.markets.length === 1 && (
         <MarketModal
-          event={selectedMarket}
+          market={selectedMarket.markets[0]}
+          eventTitle={selectedMarket.title}
+          eventIcon={selectedMarket.icon || selectedMarket.image}
           onClose={() => setSelectedMarket(null)}
         />
       )}

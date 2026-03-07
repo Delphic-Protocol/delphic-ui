@@ -1,28 +1,35 @@
 "use client";
 
 import React, { useState } from "react";
+import { useAccount } from "wagmi";
+import { parseUnits } from "viem";
 import { PolymarketEvent } from "@/lib/polymarket/types";
+import { usePositionManager } from "@/hooks/usePositionManager";
+import { usePolymarketData } from "@/hooks/usePolymarketData";
+import { Side } from "@polymarket/clob-client";
 
 interface MarketModalProps {
-  event: PolymarketEvent;
+  market: PolymarketEvent["markets"][0];
+  eventTitle?: string;
+  eventIcon?: string;
   onClose: () => void;
   embedded?: boolean;
-  selectedMarketIndex?: number;
   initialSelectedOutcome?: number;
 }
 
-export function MarketModal({ event, onClose, embedded = false, selectedMarketIndex = 0, initialSelectedOutcome = 0 }: MarketModalProps) {
-  const [tab, setTab] = useState<"buy" | "sell">("buy");
+export function MarketModal({ market, eventTitle, eventIcon, onClose, embedded = false, initialSelectedOutcome = 0 }: MarketModalProps) {
+  const [side, setSide] = useState<Side>(Side.BUY);
   const [selectedOutcome, setSelectedOutcome] = useState<number>(initialSelectedOutcome);
   const [amount, setAmount] = useState<string>("0");
+
+  const { address } = useAccount();
+  const { proxyWallet } = usePolymarketData(address);
+  const { openPosition, isLoading, error } = usePositionManager();
 
   // Update selected outcome when initialSelectedOutcome changes
   React.useEffect(() => {
     setSelectedOutcome(initialSelectedOutcome);
   }, [initialSelectedOutcome]);
-
-  // Get the selected market from the event
-  const market = event.markets?.[selectedMarketIndex] || event.markets?.[0];
 
   // Parse outcomes and prices
   let outcomes: string[] = [];
@@ -47,13 +54,69 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
     setAmount("5.00");
   };
 
-  const handleBuy = () => {
-    // TODO: Implement buy logic
-    console.log("Buy", {
+  const handleBuy = async () => {
+    console.log("[handleBuy] Starting...");
+
+    if (!proxyWallet) {
+      console.error("[handleBuy] No proxy wallet found");
+      return;
+    }
+    console.log("[handleBuy] Proxy wallet:", proxyWallet);
+
+    if (!market) {
+      console.error("[handleBuy] No market selected");
+      return;
+    }
+    console.log("[handleBuy] Market:", market.question);
+
+    // Parse clobTokenIds to get the token ID for the selected outcome
+    // clobTokenIds is a JSON array: [YES_TOKEN_ID, NO_TOKEN_ID]
+    let clobTokenIds: string[] = [];
+    try {
+      if (market.clobTokenIds) {
+        console.log("[handleBuy] Raw clobTokenIds:", market.clobTokenIds);
+        clobTokenIds = JSON.parse(market.clobTokenIds);
+      } else {
+        console.error("[handleBuy] market.clobTokenIds is null/undefined");
+      }
+    } catch (e) {
+      console.error("[handleBuy] Error parsing clobTokenIds:", e);
+      return;
+    }
+
+    // Get the token ID based on the selected outcome
+    // Index 0 = YES, Index 1 = NO
+    const tokenId = clobTokenIds[selectedOutcome];
+    console.log("[handleBuy] Selected outcome index:", selectedOutcome);
+    console.log("[handleBuy] Selected outcome:", outcomes[selectedOutcome]);
+    console.log("[handleBuy] Token ID:", tokenId);
+
+    if (!tokenId) {
+      console.error("[handleBuy] Token ID not found for selected outcome");
+      return;
+    }
+
+    // Convert amount to lowest USDC denomination (6 decimals)
+    console.log("[handleBuy] Raw amount:", amount);
+    const amountInWei = parseUnits(amount, 6).toString();
+    console.log("[handleBuy] Amount in wei:", amountInWei);
+
+    console.log("[handleBuy] Calling openPosition with:", {
+      tokenId,
+      amount: amountInWei,
+      side,
+      safeAddress: proxyWallet,
       outcome: outcomes[selectedOutcome],
-      amount,
-      tab,
     });
+
+    await openPosition({
+      tokenId,
+      amount: amountInWei,
+      side,
+      safeAddress: proxyWallet,
+    });
+
+    console.log("[handleBuy] openPosition call completed");
   };
 
   // Embedded mode for EventPage sidebar
@@ -62,20 +125,20 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl w-full">
         {/* Trading interface */}
         <div className="p-6">
-          {/* Market selector */}
-          {event.markets && event.markets.length > 1 && (
+          {/* Market header */}
+          {(eventIcon || eventTitle) && (
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-4">
-                {(event.icon || event.image) && (
+                {eventIcon && (
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#2a2a2a]">
                     <img
-                      src={event.icon || event.image}
+                      src={eventIcon}
                       alt=""
                       className="w-full h-full object-cover"
                     />
                   </div>
                 )}
-                <span className="text-white font-medium">{market?.question}</span>
+                <span className="text-white font-medium">{market.question}</span>
               </div>
             </div>
           )}
@@ -83,37 +146,27 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
           {/* Buy/Sell tabs */}
           <div className="flex items-center gap-4 mb-6">
             <button
-              onClick={() => setTab("buy")}
+              onClick={() => setSide(Side.BUY)}
               className={`text-xl font-bold transition-colors relative pb-2 ${
-                tab === "buy" ? "text-white" : "text-zinc-500"
+                side === Side.BUY ? "text-white" : "text-zinc-500"
               }`}
             >
               Buy
-              {tab === "buy" && (
+              {side === Side.BUY && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
               )}
             </button>
             <button
-              onClick={() => setTab("sell")}
+              onClick={() => setSide(Side.SELL)}
               className={`text-xl font-bold transition-colors relative pb-2 ${
-                tab === "sell" ? "text-white" : "text-zinc-500"
+                side === Side.SELL ? "text-white" : "text-zinc-500"
               }`}
             >
               Sell
-              {tab === "sell" && (
+              {side === Side.SELL && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
               )}
             </button>
-            {event.markets && event.markets.length > 1 && (
-              <div className="ml-auto">
-                <button className="px-3 py-1.5 bg-[#2a2a2a] text-white text-sm rounded-lg hover:bg-[#3a3a3a] transition-colors flex items-center gap-2">
-                  Market
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Outcome selection */}
@@ -197,12 +250,20 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
             </div>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Buy button */}
           <button
             onClick={handleBuy}
-            className="w-full py-4 bg-blue-500 text-white rounded-xl text-lg font-bold hover:bg-blue-600 transition-colors mb-4"
+            disabled={isLoading || !proxyWallet}
+            className="w-full py-4 bg-blue-500 text-white rounded-xl text-lg font-bold hover:bg-blue-600 transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {tab === "buy" ? "Buy" : "Sell"} {outcomes[selectedOutcome]}
+            {isLoading ? "Processing..." : `${side === Side.BUY ? "Buy" : "Sell"} ${outcomes[selectedOutcome]}`}
           </button>
 
           <p className="text-zinc-500 text-xs text-center">
@@ -230,10 +291,10 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h2 className="text-xl font-bold text-white mb-2">
-                {event.title}
+                {eventTitle || market.question}
               </h2>
-              {event.subtitle && (
-                <p className="text-zinc-400 text-sm">{event.subtitle}</p>
+              {eventTitle && (
+                <p className="text-zinc-400 text-sm">{market.question}</p>
               )}
             </div>
             <button
@@ -255,28 +316,6 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
               </svg>
             </button>
           </div>
-
-          {/* Market selector dropdown */}
-          {event.markets && event.markets.length > 1 && (
-            <div className="relative">
-              <button className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-left flex items-center justify-between hover:border-[#3a3a3a] transition-colors">
-                <span>{market?.question}</span>
-                <svg
-                  className="w-5 h-5 text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Trading interface */}
@@ -284,24 +323,24 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
           {/* Buy/Sell tabs */}
           <div className="flex items-center gap-4 mb-6">
             <button
-              onClick={() => setTab("buy")}
+              onClick={() => setSide(Side.BUY)}
               className={`text-2xl font-bold transition-colors relative pb-2 ${
-                tab === "buy" ? "text-white" : "text-zinc-500"
+                side === Side.BUY ? "text-white" : "text-zinc-500"
               }`}
             >
               Buy
-              {tab === "buy" && (
+              {side === Side.BUY && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-white rounded-full" />
               )}
             </button>
             <button
-              onClick={() => setTab("sell")}
+              onClick={() => setSide(Side.SELL)}
               className={`text-2xl font-bold transition-colors relative pb-2 ${
-                tab === "sell" ? "text-white" : "text-zinc-500"
+                side === Side.SELL ? "text-white" : "text-zinc-500"
               }`}
             >
               Sell
-              {tab === "sell" && (
+              {side === Side.SELL && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-white rounded-full" />
               )}
             </button>
@@ -388,12 +427,20 @@ export function MarketModal({ event, onClose, embedded = false, selectedMarketIn
             </div>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Buy button */}
           <button
             onClick={handleBuy}
-            className="w-full py-4 bg-blue-500 text-white rounded-xl text-lg font-bold hover:bg-blue-600 transition-colors"
+            disabled={isLoading || !proxyWallet}
+            className="w-full py-4 bg-blue-500 text-white rounded-xl text-lg font-bold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {tab === "buy" ? "Buy" : "Sell"} {outcomes[selectedOutcome]}
+            {isLoading ? "Processing..." : `${side === Side.BUY ? "Buy" : "Sell"} ${outcomes[selectedOutcome]}`}
           </button>
         </div>
       </div>

@@ -19,9 +19,9 @@ export class PolymarketService {
   constructor(
     relayerUrl: string = POLYMARKET_RELAYER_URL,
     safeFactory: Address = SAFE_FACTORY_ADDRESS,
-    builderKey: string = process.env.POLY_BUILDER_API_KEY || "",
-    builderSecret: string = process.env.POLY_BUILDER_SECRET || "",
-    builderPassphrase: string = process.env.POLY_BUILDER_PASSPHRASE || ""
+    builderKey: string = process.env.NEXT_PUBLIC_POLY_BUILDER_API_KEY || "",
+    builderSecret: string = process.env.NEXT_PUBLIC_POLY_BUILDER_SECRET || "",
+    builderPassphrase: string = process.env.NEXT_PUBLIC_POLY_BUILDER_PASSPHRASE || ""
   ) {
     this.relayerUrl = relayerUrl;
     this.safeFactory = safeFactory;
@@ -162,10 +162,10 @@ export class PolymarketService {
 
     return {
       "Content-Type": "application/json",
-      "POLY_BUILDER_API_KEY": this.builderKey,
+      "NEXT_PUBLIC_POLY_BUILDER_API_KEY": this.builderKey,
       "POLY_BUILDER_SIGNATURE": sigUrlSafe,
       "POLY_BUILDER_TIMESTAMP": `${ts}`,
-      "POLY_BUILDER_PASSPHRASE": this.builderPassphrase,
+      "NEXT_PUBLIC_POLY_BUILDER_PASSPHRASE": this.builderPassphrase,
     };
   }
 
