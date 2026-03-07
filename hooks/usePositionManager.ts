@@ -29,8 +29,6 @@ interface PositionManagerResult {
 }
 
 export function usePositionManager(): PositionManagerResult {
-  const cId = useChainId()
-  console.log("CHAIN_ID", cId)
   const { address, chainId } = useAccount()
   // Get wallet client for any chain first
   const { data: walletClient } = useWalletClient({ chainId });

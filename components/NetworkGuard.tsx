@@ -22,7 +22,9 @@ export function NetworkGuard({ children }: { children: React.ReactNode }) {
   // If user has Polymarket account, enforce Ethereum Mainnet
   const isWrongNetwork = chain?.id !== mainnet.id;
 
-  if (isWrongNetwork) {
+  /**
+   * 
+   *   if (isWrongNetwork) {
     return (
       <div className="max-w-2xl mx-auto mt-20">
         <div className="p-8 bg-[#1a1a1a] rounded-xl border border-red-500/20">
@@ -44,5 +46,7 @@ export function NetworkGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+   */
+  
   return <>{children}</>;
 }
