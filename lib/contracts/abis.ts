@@ -18,8 +18,10 @@ export const MarginAccountFactoryABI = [
 export const MarginAccountABI = [
   {
     inputs: [
-      { name: "amount", type: "uint256" },
+      { name: "token", type: "address" },
+      { name: "depositAmount", type: "uint256" },
       { name: "borrowAmount", type: "uint256" },
+      { name: "safe", type: "address" },
     ],
     name: "depositBorrowAndBridge",
     outputs: [],

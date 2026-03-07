@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { polymarketService } from "@/lib/polymarket/PolymarketService";
+import { supabaseUsersService } from "@/lib/supabase/SupabaseUsersService";
 import { Address } from "viem";
 
 export async function POST(request: NextRequest) {
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
 
     // Create the Safe via the relayer
     const result = await polymarketService.createSafe(address as Address, signature);
+
+    // Store user and safe address in Supabase
+    await supabaseUsersService.upsertUser(address as Address, result.safeAddress);
 
     return NextResponse.json({
       success: true,

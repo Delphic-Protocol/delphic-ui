@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAddress } from "viem";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
+import { supabaseUsersService } from "@/lib/supabase/SupabaseUsersService";
+import { Address } from "viem";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -17,26 +14,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const userData = await supabaseUsersService.getUser(address as Address);
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("user_address, safe_address")
-      .eq("user_address", getAddress(address))
-      .single();
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        // No rows returned
-        return NextResponse.json({ user: null });
-      }
-      throw error;
+    if (!userData) {
+      return NextResponse.json({ user: null });
     }
 
     return NextResponse.json({
       user: {
-        address: data.user_address,
-        proxyWallet: data.safe_address
+        address: userData.address,
+        proxyWallet: userData.safeAddress
       }
     });
   } catch (error) {

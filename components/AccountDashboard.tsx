@@ -102,7 +102,7 @@ export function AccountDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-6 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
               <p className="text-sm text-zinc-400 mb-1">
-                Collateral (stETH)
+                Collateral (wstETH)
               </p>
               <p className="text-2xl font-bold text-white">
                 {parseFloat(collateral).toFixed(4)}

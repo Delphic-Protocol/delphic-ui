@@ -44,7 +44,7 @@ export function HomePage() {
                 Fund Polymarket with yield tokens
               </h2>
               <p className="text-lg text-zinc-400 mb-8 max-w-2xl mx-auto">
-                Deposit yield-generating tokens like stETH to borrow USDC and fund your Polymarket account
+                Deposit yield-generating tokens like wstETH to borrow USDC and fund your Polymarket account
               </p>
               <div className="mt-8">
                 <WalletConnect />
