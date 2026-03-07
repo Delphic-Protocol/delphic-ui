@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useChainId, useWalletClient } from "wagmi";
+import { useAccount, useWalletClient, usePublicClient } from "wagmi";
 import { ClobClient, OrderType, Side, SignatureType } from "@polymarket/clob-client";
+import { parseAbi, stringToHex } from "viem";
 
 const CLOB_HOST = "https://clob.polymarket.com";
 const CHAIN_ID = 137; // Polygon mainnet
+const POSITION_MANAGER = process.env.NEXT_PUBLIC_POSITION_MANAGER_ADDRESS as `0x${string}`;
+
+const POSITION_MANAGER_ABI = parseAbi([
+  "event OpenPositionRequested(address indexed onBehalfOf, uint256 indexed positionId, bytes signature)",
+  "function openPosition(address onBehalfOf, bytes calldata signature) external returns (uint256 positionId)",
+]);
 
 interface OpenPositionParams {
   tokenId: string;
@@ -29,9 +36,9 @@ interface PositionManagerResult {
 }
 
 export function usePositionManager(): PositionManagerResult {
-  const { address, chainId } = useAccount()
-  // Get wallet client for any chain first
+  const { address, chainId } = useAccount();
   const { data: walletClient } = useWalletClient({ chainId });
+  const publicClient = usePublicClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -99,10 +106,34 @@ export function usePositionManager(): PositionManagerResult {
       });
 
       console.log("  Order signed ✓");
-      console.log("  Order ID:", order.orderID);
+      console.log("  Order details:", order);
 
-      // Store order ID as txHash
-      setTxHash(String(order.orderID || "pending"));
+      // Convert order to JSON string
+      const orderJson = JSON.stringify(order);
+      console.log("  Order JSON:", orderJson);
+
+      console.log("\n[4/4] Calling openPosition on PositionManager contract...");
+      if (!publicClient) {
+        throw new Error("Public client not available");
+      }
+
+      const hash = await walletClient.writeContract({
+        address: POSITION_MANAGER,
+        abi: POSITION_MANAGER_ABI,
+        functionName: "openPosition",
+        args: [safeAddress as `0x${string}`, stringToHex(orderJson)],
+      });
+
+      console.log("  Transaction hash:", hash);
+
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+      });
+
+      console.log("  Transaction confirmed ✓");
+      console.log("  Position ID:", receipt.logs[0]?.topics[2]);
+
+      setTxHash(hash);
     } catch (err) {
       console.error("Error opening position:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to open position";
