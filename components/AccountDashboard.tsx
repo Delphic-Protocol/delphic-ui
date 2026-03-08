@@ -3,10 +3,13 @@
 import { useAccount, useReadContract } from "wagmi";
 import { useMarginAccount } from "@/hooks/useMarginAccount";
 import { usePolymarketData } from "@/hooks/usePolymarketData";
+import { usePolymarketPositions } from "@/hooks/usePolymarketPositions";
 import { MarginAccountABI } from "@/lib/contracts/abis";
 import { formatUnits } from "viem";
 import { useState } from "react";
-import { PolymarketPositions } from "./PolymarketPositions";
+import { PositionsTable } from "./PositionsTable";
+import { DepositAndBridge } from "./DepositAndBridge";
+import { RepayLoan } from "./RepayLoan";
 
 export function AccountDashboard() {
   const { address } = useAccount();
@@ -15,6 +18,7 @@ export function AccountDashboard() {
 
   // Fetch Polymarket data
   const polymarketData = usePolymarketData(address);
+  const positionsData = usePolymarketPositions(polymarketData.proxyWallet);
 
   const { data: collateralAmount } = useReadContract({
     address: marginAccountAddress,
@@ -98,7 +102,7 @@ export function AccountDashboard() {
 
       {/* Tab Content */}
       {activeTab === "overview" && (
-        <div className="space-y-4">
+        <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-6 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
               <p className="text-sm text-zinc-400 mb-1">
@@ -132,14 +136,19 @@ export function AccountDashboard() {
               </p>
             </div>
           </div>
-        </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DepositAndBridge />
+            <RepayLoan />
+          </div>
+        </>
       )}
 
       {activeTab === "positions" && (
-        <PolymarketPositions
-          history={polymarketData.history}
-          loading={polymarketData.loading}
-          error={polymarketData.error}
+        <PositionsTable
+          positions={positionsData.positions}
+          loading={positionsData.loading}
+          error={positionsData.error}
         />
       )}
     </div>

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useAccount, useWalletClient, usePublicClient } from "wagmi";
-import { ClobClient, OrderType, Side, SignatureType } from "@polymarket/clob-client";
-import { parseAbi, stringToHex } from "viem";
+import { AssetType, ClobClient, OrderType, Side, SignatureType } from "@polymarket/clob-client";
+import { encodeAbiParameters, parseAbi, stringToHex } from "viem";
+import { toast } from "sonner";
 
 const CLOB_HOST = "https://clob.polymarket.com";
 const CHAIN_ID = 137; // Polygon mainnet
@@ -76,17 +77,8 @@ export function usePositionManager(): PositionManagerResult {
       console.log(`  Safe: ${safeAddress}`);
       console.log(`  Token ID: ${tokenId}`);
       console.log(`  Side: ${side}`);
-
-      // Read CLOB API credentials from environment variables
-      const creds = {
-        key: process.env.NEXT_PUBLIC_CLOB_API_KEY!,
-        secret: process.env.NEXT_PUBLIC_CLOB_SECRET!,
-        passphrase: process.env.NEXT_PUBLIC_CLOB_PASSPHRASE!,
-      };
-
-      if (!creds.key || !creds.secret || !creds.passphrase) {
-        throw new Error("CLOB API credentials not configured");
-      }
+      const clientL1 = new ClobClient(CLOB_HOST, CHAIN_ID, walletClient);
+      const creds = await clientL1.createOrDeriveApiKey()
 
       const client = new ClobClient(
         CLOB_HOST,
@@ -117,11 +109,21 @@ export function usePositionManager(): PositionManagerResult {
         throw new Error("Public client not available");
       }
 
+      const params = encodeAbiParameters(
+        [
+          { type: "string" }, // signed order JSON
+          { type: "string" }, // CLOB API key
+          { type: "string" }, // CLOB secret
+          { type: "string" }, // CLOB passphrase
+        ],
+        [orderJson, creds.key, creds.secret, creds.passphrase],
+      );
+
       const hash = await walletClient.writeContract({
         address: POSITION_MANAGER,
         abi: POSITION_MANAGER_ABI,
         functionName: "openPosition",
-        args: [safeAddress as `0x${string}`, stringToHex(orderJson)],
+        args: [safeAddress as `0x${string}`, params],
       });
 
       console.log("  Transaction hash:", hash);
@@ -134,10 +136,20 @@ export function usePositionManager(): PositionManagerResult {
       console.log("  Position ID:", receipt.logs[0]?.topics[2]);
 
       setTxHash(hash);
+
+      // Show success toast
+      toast.success("Successfully opened position!", {
+        description: `Transaction: ${hash.slice(0, 10)}...${hash.slice(-8)}`,
+      });
     } catch (err) {
       console.error("Error opening position:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to open position";
       setError(errorMessage);
+
+      // Show error toast
+      toast.error("Failed to open position", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

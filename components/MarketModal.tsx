@@ -98,20 +98,10 @@ export function MarketModal({ market, eventTitle, eventIcon, onClose, embedded =
 
     // Convert amount to lowest USDC denomination (6 decimals)
     console.log("[handleBuy] Raw amount:", amount);
-    const amountInWei = parseUnits(amount, 6).toString();
-    console.log("[handleBuy] Amount in wei:", amountInWei);
-
-    console.log("[handleBuy] Calling openPosition with:", {
-      tokenId,
-      amount: amountInWei,
-      side,
-      safeAddress: proxyWallet,
-      outcome: outcomes[selectedOutcome],
-    });
 
     await openPosition({
       tokenId,
-      amount: amountInWei,
+      amount,
       side,
       safeAddress: proxyWallet,
     });

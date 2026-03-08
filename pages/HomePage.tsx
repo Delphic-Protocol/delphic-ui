@@ -102,14 +102,7 @@ export function HomePage() {
                       <InitializeMarginAccount />
                     </div>
                   ) : (
-                    <>
-                      <AccountDashboard />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <DepositAndBridge />
-                        <RepayLoan />
-                      </div>
-                    </>
+                    <AccountDashboard />
                   )}
                 </>
               )}
