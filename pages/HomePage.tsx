@@ -25,12 +25,7 @@ export function HomePage() {
   const showRegistrationModal = polymarketData.userNotFound;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
-      {/* Animated orbs background */}
-      <div className="orb orb-1"></div>
-      <div className="orb orb-2"></div>
-      <div className="orb orb-3"></div>
-      <div className="orb orb-4"></div>
+    <div className="min-h-screen bg-[#1a1f2e] relative overflow-hidden">
 
       <header className="border-b border-[#2a2a2a] bg-[#0a0a0a]/80 backdrop-blur-sm relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

@@ -41,9 +41,9 @@ export function EventPage({ event, onBack }: EventPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#1a1f2e] text-white">
       {/* Header */}
-      <div className="border-b border-[#2a2a2a] bg-[#0a0a0a]/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-[#2a2a2a] bg-[#1a1f2e]/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start gap-4">
@@ -127,6 +127,7 @@ export function EventPage({ event, onBack }: EventPageProps) {
                 } catch (e) {}
 
                 const yesPrice = outcomePrices[0] ? parseFloat(outcomePrices[0]) * 100 : 0;
+                const noPrice = outcomePrices[1] ? parseFloat(outcomePrices[1]) * 100 : 0;
                 const yesCost = outcomePrices[0] ? parseFloat(outcomePrices[0]) : 0;
                 const noCost = outcomePrices[1] ? parseFloat(outcomePrices[1]) : 0;
 
@@ -134,51 +135,64 @@ export function EventPage({ event, onBack }: EventPageProps) {
                   <div
                     key={market.id}
                     onClick={() => handleMarketClick(market)}
-                    className={`bg-[#1a1a1a] border rounded-xl p-6 transition-all cursor-pointer ${
+                    className={`border rounded-xl px-6 py-4 transition-all cursor-pointer ${
                       selectedMarket?.id === market.id
-                        ? "border-blue-500"
-                        : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                        ? "border-blue-500 bg-[#1a1a1a]"
+                        : "border-[#2a2a2a] bg-transparent hover:bg-[#1a1a1a]"
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-white font-medium text-lg mb-2">{market.question}</h3>
-                        <div className="flex items-center gap-2 text-sm text-zinc-400">
-                          <span>{formatVolume(market.volume)} Vol.</span>
-                          <button className="hover:text-white transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                          </button>
+                    <div className="flex items-center justify-between gap-6">
+                      {/* Left: Flag + Title + Volume */}
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {market.image && (
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#2a2a2a] flex-shrink-0">
+                            <img
+                              src={market.image}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-medium text-base mb-1 truncate">{market.question}</h3>
+                          <div className="text-sm text-zinc-400">
+                            {formatVolume(market.volume)} Vol. <span className="text-zinc-600">•</span> <span className="text-green-400">Yes {yesPrice.toFixed(1)}¢ · {noPrice.toFixed(1)}¢</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right ml-6">
-                        <div className="text-4xl font-bold text-white mb-1">{yesPrice.toFixed(0)}%</div>
-                        <div className="text-sm text-red-400">▼ 47%</div>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarketClick(market);
-                          setSelectedOutcome(0);
-                        }}
-                        className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-colors"
-                      >
-                        Buy Yes {(yesCost * 100).toFixed(1)}¢
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarketClick(market);
-                          setSelectedOutcome(1);
-                        }}
-                        className="px-6 py-4 bg-red-900/60 hover:bg-red-900/80 text-red-400 rounded-lg font-bold transition-colors"
-                      >
-                        Buy No {(noCost * 100).toFixed(1)}¢
-                      </button>
+                      {/* Center: Percentage */}
+                      <div className="text-center flex-shrink-0">
+                        <div className="text-3xl font-bold text-white">{yesPrice.toFixed(0)}%</div>
+                        <div className="text-xs text-red-400">▼ 1%</div>
+                      </div>
+
+                      {/* Right: Buttons */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarketClick(market);
+                            setSelectedOutcome(0);
+                          }}
+                          className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+                        >
+                          Buy Yes {(yesCost * 100).toFixed(1)}¢
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarketClick(market);
+                            setSelectedOutcome(1);
+                          }}
+                          className="px-6 py-2.5 bg-red-900/50 hover:bg-red-900/70 text-red-300 rounded-lg font-medium transition-colors whitespace-nowrap"
+                        >
+                          Buy No {(noCost * 100).toFixed(1)}¢
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
