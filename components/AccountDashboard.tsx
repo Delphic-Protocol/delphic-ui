@@ -1,11 +1,10 @@
 "use client";
 
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount } from "wagmi";
 import { useMarginAccount } from "@/hooks/useMarginAccount";
 import { usePolymarketData } from "@/hooks/usePolymarketData";
 import { usePolymarketPositions } from "@/hooks/usePolymarketPositions";
-import { MarginAccountABI } from "@/lib/contracts/abis";
-import { formatUnits } from "viem";
+import { useAavePosition } from "@/hooks/useAavePosition";
 import { useState } from "react";
 import { PositionsTable } from "./PositionsTable";
 import { DepositAndBridge } from "./DepositAndBridge";
@@ -13,47 +12,23 @@ import { RepayLoan } from "./RepayLoan";
 
 export function AccountDashboard() {
   const { address } = useAccount();
-  const { marginAccountAddress, hasMarginAccount } = useMarginAccount(address);
+  const { hasMarginAccount, marginAccountAddress } = useMarginAccount(address);
   const [activeTab, setActiveTab] = useState<"overview" | "positions">("overview");
 
   // Fetch Polymarket data
   const polymarketData = usePolymarketData(address);
-  const positionsData = usePolymarketPositions(polymarketData.proxyWallet);
+  const positionsData = usePolymarketPositions(polymarketData.proxyWallet || undefined);
 
-  const { data: collateralAmount } = useReadContract({
-    address: marginAccountAddress,
-    abi: MarginAccountABI,
-    functionName: "getCollateralAmount",
-    query: {
-      enabled: !!marginAccountAddress,
-    },
-  });
-
-  const { data: borrowedAmount } = useReadContract({
-    address: marginAccountAddress,
-    abi: MarginAccountABI,
-    functionName: "getBorrowedAmount",
-    query: {
-      enabled: !!marginAccountAddress,
-    },
-  });
-
-  const { data: loanHealth } = useReadContract({
-    address: marginAccountAddress,
-    abi: MarginAccountABI,
-    functionName: "getLoanHealth",
-    query: {
-      enabled: !!marginAccountAddress,
-    },
-  });
+  // Fetch Aave position data using proxy wallet
+  const aavePosition = useAavePosition(marginAccountAddress as `0x${string}` | undefined);
 
   if (!hasMarginAccount) {
     return null;
   }
 
-  const collateral = collateralAmount ? formatUnits(collateralAmount, 18) : "0";
-  const borrowed = borrowedAmount ? formatUnits(borrowedAmount, 6) : "0";
-  const healthFactor = loanHealth ? (Number(loanHealth) / 1e18).toFixed(2) : "0";
+  const collateral = aavePosition.wstETHBalance;
+  const borrowed = aavePosition.usdcDebt;
+  const healthFactor = aavePosition.healthFactor;
 
   const getHealthColor = (health: string) => {
     const healthNum = parseFloat(health);
